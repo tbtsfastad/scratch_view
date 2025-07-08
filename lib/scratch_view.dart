@@ -39,7 +39,8 @@ class ScratchView extends StatefulWidget {
   State<ScratchView> createState() => ScratchViewState();
 }
 
-class ScratchViewState extends State<ScratchView> with SingleTickerProviderStateMixin {
+class ScratchViewState extends State<ScratchView>
+    with SingleTickerProviderStateMixin {
   late final double _scratchRadius;
   final List<Offset?> _scratchedPoints = [];
   final List<Rect> _revealRects = [];
@@ -58,7 +59,10 @@ class ScratchViewState extends State<ScratchView> with SingleTickerProviderState
   @override
   void initState() {
     _scratchRadius = widget.scratchRadius ?? 20;
-    _animationController = AnimationController(vsync: this, duration: widget.revealDuration);
+    _animationController = AnimationController(
+      vsync: this,
+      duration: widget.revealDuration,
+    );
     super.initState();
   }
 
@@ -97,21 +101,31 @@ class ScratchViewState extends State<ScratchView> with SingleTickerProviderState
         for (int step = lastStep; step < currentStep; step++) {
           final row = step ~/ stepsPerRow;
           final col = step % stepsPerRow;
-          rectsToAdd.add(Rect.fromLTWH(col * stepWidth, row * rowHeight, stepWidth, rowHeight));
+          rectsToAdd.add(
+            Rect.fromLTWH(
+              col * stepWidth,
+              row * rowHeight,
+              stepWidth,
+              rowHeight,
+            ),
+          );
         }
 
         if (rectsToAdd.isNotEmpty) {
           setState(() {
             _revealRects.addAll(rectsToAdd);
           });
-          _calculateProgress(rectsToAdd.last.center);
+          for (final rect in rectsToAdd) {
+            _calculateProgressForRect(rect);
+          }
         }
         _lastRevealedAnimValue = animValue;
       }
     });
 
     _animationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+      if (status == AnimationStatus.completed ||
+          status == AnimationStatus.dismissed) {
         if (mounted) {
           setState(() {
             _isRevealingByRows = false;
@@ -123,10 +137,24 @@ class ScratchViewState extends State<ScratchView> with SingleTickerProviderState
     _animationController.forward(from: 0);
   }
 
+  void _calculateProgressForRect(Rect rect) {
+    final step = _scratchRadius / 2;
+    for (double dx = rect.left; dx < rect.right; dx += step) {
+      for (double dy = rect.top; dy < rect.bottom; dy += step) {
+        _calculateProgress(Offset(dx, dy));
+      }
+    }
+  }
+
   Rect convertToTapRevealRect(Offset position, double width, double height) {
     final rect = context.findRenderObject() as RenderBox;
     final offset = rect.localToGlobal(Offset.zero);
-    return Rect.fromLTWH(position.dx - offset.dx, position.dy - offset.dy, width, height);
+    return Rect.fromLTWH(
+      position.dx - offset.dx,
+      position.dy - offset.dy,
+      width,
+      height,
+    );
   }
 
   void revealByTapRect(Offset position, double width, double height) {
@@ -141,12 +169,7 @@ class ScratchViewState extends State<ScratchView> with SingleTickerProviderState
       _revealRects.add(rect);
     });
 
-    final step = _scratchRadius / 2;
-    for (double dx = rect.left; dx < rect.right; dx += step) {
-      for (double dy = rect.top; dy < rect.bottom; dy += step) {
-        _calculateProgress(Offset(dx, dy));
-      }
-    }
+    _calculateProgressForRect(rect);
   }
 
   void _calculateProgress(Offset position) {
@@ -157,15 +180,30 @@ class ScratchViewState extends State<ScratchView> with SingleTickerProviderState
 
     final rect = Rect.fromCircle(center: position, radius: _scratchRadius);
 
-    final startCol = (rect.left / cellWidth).floor().clamp(0, _progressResolution - 1);
-    final endCol = (rect.right / cellWidth).ceil().clamp(0, _progressResolution - 1);
-    final startRow = (rect.top / cellHeight).floor().clamp(0, _progressResolution - 1);
-    final endRow = (rect.bottom / cellHeight).ceil().clamp(0, _progressResolution - 1);
+    final startCol = (rect.left / cellWidth).floor().clamp(
+      0,
+      _progressResolution - 1,
+    );
+    final endCol = (rect.right / cellWidth).ceil().clamp(
+      0,
+      _progressResolution - 1,
+    );
+    final startRow = (rect.top / cellHeight).floor().clamp(
+      0,
+      _progressResolution - 1,
+    );
+    final endRow = (rect.bottom / cellHeight).ceil().clamp(
+      0,
+      _progressResolution - 1,
+    );
 
     var wasCellAdded = false;
     for (var r = startRow; r <= endRow; r++) {
       for (var c = startCol; c <= endCol; c++) {
-        final cellCenter = Offset((c + 0.5) * cellWidth, (r + 0.5) * cellHeight);
+        final cellCenter = Offset(
+          (c + 0.5) * cellWidth,
+          (r + 0.5) * cellHeight,
+        );
         final distance = (cellCenter - position).distance;
         if (distance <= _scratchRadius) {
           if (_scratchedCells.add(Point(c, r))) {
@@ -176,14 +214,16 @@ class ScratchViewState extends State<ScratchView> with SingleTickerProviderState
     }
 
     if (wasCellAdded) {
-      final progress = _scratchedCells.length / (_progressResolution * _progressResolution);
-
-      widget.onProgress?.call(progress);
+      final progress =
+          _scratchedCells.length / (_progressResolution * _progressResolution);
 
       if (progress >= widget.revealThreshold && !_isRevealed) {
         setState(() {
           _isRevealed = true;
         });
+        widget.onProgress?.call(1.0);
+      } else if (!_isRevealed) {
+        widget.onProgress?.call(progress);
       }
     }
   }
@@ -194,7 +234,11 @@ class ScratchViewState extends State<ScratchView> with SingleTickerProviderState
       switch (notification) {
         case _ScratchRevealNotification():
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            revealByTapRect(notification.position, notification.width, notification.height);
+            revealByTapRect(
+              notification.position,
+              notification.width,
+              notification.height,
+            );
           });
           return true;
         case ScratchRevealAllByRowsNotification():
@@ -260,7 +304,11 @@ class _ScratchAreaClipper extends CustomClipper<Path> {
   final double scratchRadius;
   final List<Rect>? rects;
 
-  _ScratchAreaClipper({required this.points, required this.scratchRadius, this.rects});
+  _ScratchAreaClipper({
+    required this.points,
+    required this.scratchRadius,
+    this.rects,
+  });
 
   @override
   Path getClip(Size size) {
@@ -285,7 +333,9 @@ class _ScratchAreaClipper extends CustomClipper<Path> {
             if (!angle.isFinite) continue;
 
             final rectPath = Path()
-              ..addRect(Rect.fromLTWH(0, -scratchRadius, distance, scratchRadius * 2));
+              ..addRect(
+                Rect.fromLTWH(0, -scratchRadius, distance, scratchRadius * 2),
+              );
 
             final transformedPath = rectPath.transform(
               (Matrix4.identity()
@@ -324,18 +374,25 @@ class _ScratchAreaClipper extends CustomClipper<Path> {
 }
 
 class ScratchRevealRectButtonView extends StatefulWidget {
-  const ScratchRevealRectButtonView({super.key, required this.child, this.onTap});
+  const ScratchRevealRectButtonView({
+    super.key,
+    required this.child,
+    this.onTap,
+  });
 
   final Widget child;
   final Function()? onTap;
 
   @override
-  State<ScratchRevealRectButtonView> createState() => _ScratchRevealRectButtonViewState();
+  State<ScratchRevealRectButtonView> createState() =>
+      _ScratchRevealRectButtonViewState();
 }
 
-class _ScratchRevealRectButtonViewState extends State<ScratchRevealRectButtonView> {
+class _ScratchRevealRectButtonViewState
+    extends State<ScratchRevealRectButtonView> {
   @override
-  Widget build(BuildContext context) => GestureDetector(onTap: _onTap, child: widget.child);
+  Widget build(BuildContext context) =>
+      GestureDetector(onTap: _onTap, child: widget.child);
 
   void _onTap() {
     final rect = context.findRenderObject() as RenderBox;
