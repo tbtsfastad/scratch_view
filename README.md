@@ -6,6 +6,12 @@ Scratch card component, supports foreground and background layers as any compone
 
 刮刮卡组件，支持前景和背景层为任意组件，支持点击刮开指定区域，支持一次性刮开全部
 
+**Preview**
+
+**预览**
+
+![](https://github.com/tbtsfastad/scratch_view/blob/master/screenshot-20250708-190111.png?raw=true)
+
 **How to use**
 
 **如何使用**

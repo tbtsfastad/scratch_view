@@ -1,7 +1,7 @@
 name: scratch_view
 description: "Scratch Cards"
 version: 0.0.1
-homepage:
+homepage: https://github.com/tbtsfastad/scratch_view
 
 environment:
   sdk: ^3.8.1
