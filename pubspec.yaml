@@ -1,6 +1,6 @@
 name: scratch_view
 description: "Scratch Cards"
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/tbtsfastad/scratch_view
 
 environment:
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  pointer_tap_simulator: ^0.0.1
+  pointer_tap_simulator: ^0.0.2
 
 dev_dependencies:
   flutter_test:
